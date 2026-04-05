@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CFG ↔ PDA Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+  <div class="scanline"></div>
+  <div class="bg-grid"></div>
+
+  <header>
+    <div class="logo">
+      <span class="logo-bracket">[</span>
+      <span class="logo-text">CFG <span class="arrow">⇄</span> PDA</span>
+      <span class="logo-bracket">]</span>
+    </div>
+    <p class="tagline">Context-Free Grammar Transformation & Pushdown Automaton Simulator</p>
+  </header>
+
+  <div class="step-bar">
+    <div class="step active" id="step-dot-1"><span class="step-num">01</span><span class="step-label">Select Grammar</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step-dot-2"><span class="step-num">02</span><span class="step-label">Simplification</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step-dot-3"><span class="step-num">03</span><span class="step-label">CNF Conversion</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step-dot-4"><span class="step-num">04</span><span class="step-label">PDA Simulation</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="step-dot-5"><span class="step-num">05</span><span class="step-label">Result</span></div>
+  </div>
+
+  <main>
+
+    <!-- PHASE 1 -->
+    <section class="phase active" id="phase-1">
+      <div class="phase-header">
+        <span class="phase-tag">PHASE 01</span>
+        <h2>Select a Context-Free Grammar</h2>
+      </div>
+      <div class="grammar-cards">
+        <div class="grammar-card" data-grammar="anbn">
+          <div class="card-badge">L1</div>
+          <h3>aⁿbⁿ Language</h3>
+          <p>Equal number of a's followed by b's</p>
+          <code>S → aSb | ε</code>
+        </div>
+        <div class="grammar-card" data-grammar="balanced">
+          <div class="card-badge">L2</div>
+          <h3>Balanced Parentheses</h3>
+          <p>Well-formed parenthesis expressions</p>
+          <code>S → SS | (S) | ε</code>
+        </div>
+        <div class="grammar-card" data-grammar="expr">
+          <div class="card-badge">L3</div>
+          <h3>Arithmetic Expressions</h3>
+          <p>Simple expression grammar with + and *</p>
+          <code>E → E+T | T<br>T → T*F | F<br>F → (E) | a</code>
+        </div>
+        <div class="grammar-card" data-grammar="palindrome">
+          <div class="card-badge">L4</div>
+          <h3>Even Palindromes</h3>
+          <p>Strings that read same forwards & backwards</p>
+          <code>S → aSa | bSb | ε</code>
+        </div>
+      </div>
+      <div id="cfg-display" class="cfg-display hidden">
+        <div class="panel-label">SELECTED CFG</div>
+        <div id="cfg-rules"></div>
+      </div>
+      <button class="btn-primary" id="btn-to-simplify" disabled>Proceed to Simplification <span>→</span></button>
+    </section>
+
+    <!-- PHASE 2 -->
+    <section class="phase" id="phase-2">
+      <div class="phase-header">
+        <span class="phase-tag">PHASE 02</span>
+        <h2>Grammar Simplification</h2>
+        <p class="phase-desc">Removing ε-productions, unit productions, and useless symbols</p>
+      </div>
+      <div class="steps-container" id="simplify-steps"></div>
+      <div class="grammar-before-after" id="simplify-result" style="display:none">
+        <div class="before-panel"><div class="panel-label">ORIGINAL CFG</div><div id="simplify-before"></div></div>
+        <div class="arrow-mid">⟹</div>
+        <div class="after-panel"><div class="panel-label">SIMPLIFIED CFG</div><div id="simplify-after"></div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btn-back-1">← Back</button>
+        <button class="btn-primary" id="btn-to-cnf">Convert to CNF <span>→</span></button>
+      </div>
+    </section>
+
+    <!-- PHASE 3 -->
+    <section class="phase" id="phase-3">
+      <div class="phase-header">
+        <span class="phase-tag">PHASE 03</span>
+        <h2>Chomsky Normal Form Conversion</h2>
+        <p class="phase-desc">Every production becomes A → BC or A → a</p>
+      </div>
+      <div class="steps-container" id="cnf-steps"></div>
+      <div class="grammar-before-after" id="cnf-result" style="display:none">
+        <div class="before-panel"><div class="panel-label">SIMPLIFIED CFG</div><div id="cnf-before"></div></div>
+        <div class="arrow-mid">⟹</div>
+        <div class="after-panel"><div class="panel-label">CNF GRAMMAR</div><div id="cnf-after"></div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btn-back-2">← Back</button>
+        <button class="btn-primary" id="btn-to-pda">Simulate PDA <span>→</span></button>
+      </div>
+    </section>
+
+    <!-- PHASE 4 -->
+    <section class="phase" id="phase-4">
+      <div class="phase-header">
+        <span class="phase-tag">PHASE 04</span>
+        <h2>Pushdown Automaton Simulation</h2>
+        <p class="phase-desc">Enter a string and watch the PDA process it step-by-step</p>
+      </div>
+      <div class="pda-input-row">
+        <div class="input-wrapper">
+          <label>Input String</label>
+          <input type="text" id="pda-input" placeholder="e.g. aabb" autocomplete="off" spellcheck="false"/>
+          <span class="input-hint" id="input-hint"></span>
+        </div>
+        <button class="btn-primary" id="btn-run-pda">Run PDA ▶</button>
+      </div>
+      <div id="pda-viz" class="pda-viz hidden">
+        <div class="tape-section">
+          <div class="panel-label">INPUT TAPE</div>
+          <div class="tape" id="tape-display"></div>
+        </div>
+        <div class="pda-split">
+          <div class="stack-panel">
+            <div class="panel-label">STACK</div>
+            <div class="stack-visual" id="stack-visual">
+              <div class="stack-bottom">⊥</div>
+            </div>
+          </div>
+          <div class="transitions-panel">
+            <div class="panel-label">TRANSITION LOG</div>
+            <div class="transition-log" id="transition-log"></div>
+          </div>
+        </div>
+        <div class="playback-controls">
+          <button class="ctrl-btn" id="ctrl-prev">◀◀</button>
+          <button class="ctrl-btn active" id="ctrl-play">▶</button>
+          <button class="ctrl-btn" id="ctrl-next">▶▶</button>
+          <div class="step-counter"><span id="step-current">0</span> / <span id="step-total">0</span></div>
+          <div class="speed-control">
+            <label>Speed</label>
+            <input type="range" id="speed-slider" min="200" max="2000" value="900" step="100"/>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btn-back-3">← Back</button>
+        <button class="btn-primary hidden" id="btn-to-result">See Result <span>→</span></button>
+      </div>
+    </section>
+
+    <!-- PHASE 5 -->
+    <section class="phase" id="phase-5">
+      <div class="phase-header">
+        <span class="phase-tag">PHASE 05</span>
+        <h2>Simulation Result</h2>
+      </div>
+      <div class="result-box" id="result-box">
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-verdict" id="result-verdict"></div>
+        <div class="result-input-echo">Input: <code id="result-input-echo"></code></div>
+        <div class="result-reason" id="result-reason"></div>
+      </div>
+      <div class="summary-section">
+        <div class="panel-label">COMPLETE STEP TRACE</div>
+        <table class="trace-table" id="trace-table">
+          <thead>
+            <tr><th>#</th><th>State</th><th>Input Read</th><th>Stack (top→bottom)</th><th>Action</th></tr>
+          </thead>
+          <tbody id="trace-body"></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btn-back-4">← Back to PDA</button>
+        <button class="btn-primary" id="btn-restart">↺ Start Over</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>CFG ⇄ PDA Visualizer</span>
+    <span>Theory of Computation · Educational Tool</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html> 
